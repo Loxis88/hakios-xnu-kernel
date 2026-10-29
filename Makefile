@@ -14,12 +14,12 @@
 #   make prebuilt        refresh prebuilt/ from what was built (tools/update-prebuilt.sh)
 #   make clean           build output of the kernel, loader and images
 #
-#   DEVICE=poco-x5-pro   the device directory under devices/ (default poco-x5-pro)
+#   DEVICE=dipper   the device directory under devices/ (default dipper)
 #   ARGS="..."           kernel arguments for make phone (default: everything the phone has)
 #   SECS=600             the session's length for make phone / make qemu
 #   JOBS=8               parallel jobs for the kernel build
 
-DEVICE ?= poco-x5-pro
+DEVICE ?= dipper
 JOBS ?= 8
 SECS ?= 600
 ARGS_OPEN ?= cpus=1

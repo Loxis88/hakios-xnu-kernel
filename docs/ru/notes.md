@@ -3,11 +3,11 @@
 > Это прежний README целиком — история работы, измерения и устройство каждой части. Краткое введение теперь в [README.md](../../README.md).
 
 
-**HakiOS** — iOS 16.5 на POCO X5 Pro 5G (redwood). Открытое ядро Apple XNU (xnu-8796.121.2 — ядро iOS 16.5), свой загрузчик и свои замены закрытых драйверов,
+**HakiOS** — iOS 16.5 на POCO X5 Pro 5G (dipper). Открытое ядро Apple XNU (xnu-8796.121.2 — ядро iOS 16.5), свой загрузчик и свои замены закрытых драйверов,
 под которыми работает **немодифицированный userland iOS 16.5** от iPhone X: launchd → backboardd → SpringBoard →
 приложения. Работает в двух местах:
 
-- **POCO X5 Pro 5G (redwood, Snapdragon 778G)** — ничего не прошивается: UEFI грузится через `fastboot boot`,
+- **POCO X5 Pro 5G (dipper, Snapdragon 778G)** — ничего не прошивается: UEFI грузится через `fastboot boot`,
   вся система живёт в ОЗУ, после перезагрузки телефон снова в Android;
 - **QEMU** (`virt`, aarch64) — то же самое на любом Linux-компьютере, без телефона.
 
@@ -54,8 +54,8 @@ sudo pacman -S --needed git python 7zip lz4 gcc qemu-system-aarch64 qemu-ui-gtk 
 (7-Zip нужен версии 23 или новее — он читает APFS; `lz4` — библиотека `liblz4`.)
 
 ```sh
-git clone git@github.com:vcvkk/darwin-redwood.git
-cd darwin-redwood
+git clone git@github.com:vcvkk/darwin-dipper.git
+cd darwin-dipper
 sysimage/fetch.sh               # скачивает 7,4 ГБ с CDN Apple и распаковывает нужное (минут 5–15)
 REST=1 userland/build.sh      # собирает образы APFS: userland/root.apfs и userland/system.apfs (2,5 ГБ)
 mkdir -p logs
@@ -176,7 +176,7 @@ codec DMA TX_CDC_DMA_TX_3 и звуковой процессор в поток, 
   разблокировано: программы записывают в неё пароли и читают их обратно (wifid — пароли сетей, подключённых из
   Настроек). Это не защищённая связка: Secure Enclave нет, ключи классов защиты заменяет обратимое
   преобразование в ядре (`iokit/Kernel/MiniAppleKeyStore.cpp`), и всё записанное лежит в `/private/var`, то есть в
-  памяти; без `var_store=1` оно пропадает при следующем старте (см. «Том данных между загрузками»). Проверка: `/redwood/bin/keychain_test` (подписывается `ldid`
+  памяти; без `var_store=1` оно пропадает при следующем старте (см. «Том данных между загрузками»). Проверка: `/dipper/bin/keychain_test` (подписывается `ldid`
   с группой доступа к связке; без `ldid` связка такой программе отказывает).
 - **Wi-Fi телефона (опытно): `wifi=1`.** Радио телефона подключается к одной сети WPA2 с паролем, и iOS выходит
   через него в интернет: адрес по DHCP, DNS, HTTPS. Нужны прошивка радио в `fw-wifi/` (см. `wifi_step=N` в
@@ -233,7 +233,7 @@ codec DMA TX_CDC_DMA_TX_3 и звуковой процессор в поток, 
 
 ## На телефоне
 
-Нужен именно **POCO X5 Pro 5G (redwood)** с разблокированным загрузчиком, `adb` и `fastboot` на компьютере
+Нужен именно **POCO X5 Pro 5G (dipper)** с разблокированным загрузчиком, `adb` и `fastboot` на компьютере
 (`sudo pacman -S android-tools`), и образы из предыдущего раздела (`sysimage/fetch.sh`, `REST=1 userland/build.sh`).
 
 **Прошивка самого телефона.** В репозитории её нет и быть не может: она вендорская и берётся с того самого
@@ -337,7 +337,7 @@ XL_SECS=900 XL_CMDLINE="touchscreen=1 cpufreq=1 bootcpu=7 cpus=8" ./xl run     #
   экземпляре. **На свой риск.**
 - Под нашим ядром телефон **не заряжается** и греется (одно ядро на 2,4 ГГц постоянно рисует). Между длинными
   сеансами возвращайте его в Android (`./xl reboot`).
-- Сенсоры в redwood бывают двух видов: Goodix GT9916 и FocalTech FT3680. Драйвер есть только для Goodix.
+- Сенсоры в dipper бывают двух видов: Goodix GT9916 и FocalTech FT3680. Драйвер есть только для Goodix.
 - Если ядро зависло, сторожевой таймер гипервизора сам перезагрузит телефон в Android (до минуты). Если нет —
   питание на 10–15 секунд.
 
@@ -706,7 +706,7 @@ Sileo работает от него и держит там свою базу.
 - **сертификаты для apt**: gnutls собран доверять `/var/jb/etc/ssl/certs/cacert.pem` из пакета `ca-certificates`,
   но спрашивает их у системного хранилища, а `trustd` в этом порте уходит в сеть и не получает ответа
   (5687 байт отправлено, 0 принято, перепосылки) — apt говорил `No system certificates available` и обрывал
-  рукопожатие. `etc/apt/apt.conf.d/10redwood.conf` указывает ему прямо на файл, и хранилище перестаёт быть нужно.
+  рукопожатие. `etc/apt/apt.conf.d/10dipper.conf` указывает ему прямо на файл, и хранилище перестаёт быть нужно.
 - **`libkrw0`, `libdimentio0` и `shshd` выброшены** из бутстрапа (файлы и записи в базе): первые два читают и
   пишут ядро взломанного телефона через плагин, который даёт взлом (`libkrw0-plugin`), а `shshd` ими сохраняет
   подписи; здесь ядро своё, плагина нет ни у кого, а apt с одной неудовлетворённой зависимостью в базе
@@ -767,9 +767,9 @@ Sileo работает от него и держит там свою базу.
 
 ```sh
 CRYPTEXES=flash FLASHBOOT=1 GL=1 REST=1 QUIET=1 RC_JOBS=rc.jobs.jb \
-  INJECT="$(printf '%s\n' '/redwood/lib/libhakios.dylib backboardd containermanagerd containermanagerd_system' \
-    '/redwood/lib/libhakios.sb.dylib SpringBoard' '/redwood/lib/libhakios.media.dylib mediaserverd' \
-    '/redwood/lib/libhakios.app.dylib Sileo')" userland/build.sh
+  INJECT="$(printf '%s\n' '/dipper/lib/libhakios.dylib backboardd containermanagerd containermanagerd_system' \
+    '/dipper/lib/libhakios.sb.dylib SpringBoard' '/dipper/lib/libhakios.media.dylib mediaserverd' \
+    '/dipper/lib/libhakios.app.dylib Sileo')" userland/build.sh
 ./xl ramdisk userland/flashboot.apfs
 XL_CMDLINE="root_apfs=ufs_darwin ufs=2 ufs_native=1 bootcpu=7 cpus=8 cpufreq=1 touchscreen=1 gpu=1 adsp=1 sound=4 wifi=1" XL_SECS=1800 ./xl run
 ```
@@ -948,16 +948,16 @@ iOS доходит до того же домашнего экрана, что и
 /dev/ufs_darwin on / (apfs, local, read-only)
 devfs on /dev (devfs, local, nobrowse)
 root_device on /private/preboot (apfs, local, read-only)
-/dev/md1 on /private/preboot/redwood (apfs, local, read-only)
-/redwood/LaunchDaemons on /System/Library/LaunchDaemons (bindfs, local, nosuid, read-only, nobrowse)
-/redwood/empty on /System/Library/NanoLaunchDaemons (bindfs, local, nosuid, read-only, nobrowse)
-/redwood/empty on /System/Library/LaunchAngels (bindfs, local, nosuid, read-only, nobrowse)
-/redwood/xpc on /System/Library/xpc (bindfs, local, nosuid, read-only, nobrowse)
-/redwood/hal on /System/Library/Audio/Plug-Ins/HAL (bindfs, local, nosuid, read-only, nobrowse)
+/dev/md1 on /private/preboot/dipper (apfs, local, read-only)
+/dipper/LaunchDaemons on /System/Library/LaunchDaemons (bindfs, local, nosuid, read-only, nobrowse)
+/dipper/empty on /System/Library/NanoLaunchDaemons (bindfs, local, nosuid, read-only, nobrowse)
+/dipper/empty on /System/Library/LaunchAngels (bindfs, local, nosuid, read-only, nobrowse)
+/dipper/xpc on /System/Library/xpc (bindfs, local, nosuid, read-only, nobrowse)
+/dipper/hal on /System/Library/Audio/Plug-Ins/HAL (bindfs, local, nosuid, read-only, nobrowse)
 /fw on /fw (bindfs, local, nosuid, read-only, nobrowse)
 /dev/ufs_darwin,c=1 on /private/preboot/Cryptexes/OS (apfs, local, read-only)
 /dev/ufs_darwin,c=2 on /private/preboot/Cryptexes/App (apfs, local, read-only)
-/private/preboot/redwood on /redwood (bindfs, local, nosuid, read-only, nobrowse)
+/private/preboot/dipper on /dipper (bindfs, local, nosuid, read-only, nobrowse)
 ramfs on /private/var (ramfs, local)
 ```
 
@@ -966,7 +966,7 @@ ramfs on /private/var (ramfs, local)
 
 - ядро стартует как всегда, с образа в памяти (`rd=md0` — ровно по этой строке launchd понимает, что задачи
   загрузки настоящего устройства не нужны: с `rd=md1` он выполнял их все и вставал на `keybag`); `stage0`
-  монтирует маленький образ на `/redwood` и запускает его `init`;
+  монтирует маленький образ на `/dipper` и запускает его `init`;
 - `init` (`flash_root`) монтирует том на `/flash`, кладёт поверх его каталогов (bindfs) наш список заданий
   launchd, пустые `NanoLaunchDaemons` и `LaunchAngels`, `xpc` без `launchd.plist` и только наш аудиоплагин,
   даёт `/Applications` 32 приложения, которые iOS ставит при первом запуске, и просит ядро сделать том корнем
@@ -975,10 +975,10 @@ ramfs on /private/var (ramfs, local)
   `Cryptexes/App` криптексы — контейнеры 1 и 2 раздела `darwin` (`/dev/ufs_darwin,c=1`, `c=2`) или, если образ в
   памяти их несёт, его (`/dev/md0,c=1`, `c=2`); туда ведут `/System/Cryptexes/OS` и `App` самого тома, как на
   iPhone, где их прививает `graftdmg`; кроме корня, ядро принимает общий кеш только
-  оттуда; маленький образ на загрузочном томе привязывается обратно на `/redwood`.
+  оттуда; маленький образ на загрузочном томе привязывается обратно на `/dipper`.
 
 Для этого в драйвере APFS появились синтетические каталоги (`sysctl kern.apfs_synthetic=ПУТЬ`), как
-`synthetic.conf` у macOS для запечатанного тома: пустые каталоги для точек монтирования (`/redwood`) или
+`synthetic.conf` у macOS для запечатанного тома: пустые каталоги для точек монтирования (`/dipper`) или
 `ПУТЬ=ЦЕЛЬ` — другое имя для каталога того же тома; так приложения из `staged_system_apps` и стоят в
 `/Applications` (точками монтирования их тот, кто регистрирует системные приложения, пропускал). Ещё:
 `lookup` APFS находит существующее при любой операции и отказывает (EROFS) только в создании нового имени, —
@@ -1283,7 +1283,7 @@ APFS, и все их читает тот же драйвер APFS ядра, чт
 | криптекс App (службы Safari) | `Cryptex1,AppOS` на `/private/preboot/Cryptexes/App`, куда ведёт `/System/Cryptexes/App` | образ Apple байт в байт (10 МБ) — контейнер 2 раздела `darwin`, на том же месте (или третий контейнер `flashboot.apfs`); в `system.apfs` — каталог `/System/Cryptexes/App` |
 | Preboot | том Preboot | загрузочный том `flashboot.apfs` (`stage0`, прошивки звукового процессора, точки монтирования), после смены корня — на `/private/preboot` |
 | Data (`/private/var`) | том Data | ramfs; с `var_store=1` его содержимое переживает перезагрузку — архивом в свободном месте раздела `darwin` (см. «Том данных между загрузками») |
-| — | — | `root.apfs` на `/redwood`: наш init, программы, библиотеки-вставки, задания launchd, прошивки GPU и Wi-Fi |
+| — | — | `root.apfs` на `/dipper`: наш init, программы, библиотеки-вставки, задания launchd, прошивки GPU и Wi-Fi |
 
 | образ | контейнеров | размер | был packfs |
 |---|---|---|---|
@@ -1426,7 +1426,7 @@ iOS, на блок за концом раздела, нули в супербл�
 была «новым устройством». Том в памяти потому, что драйвер APFS ядра читает и не пишет, а оба пути ядра к
 накопителю телефона были «только чтение по построению».
 
-Сделан не «APFS на запись», а копия дерева. `/redwood/bin/var_store` (`userland/src/var_store.c`) упаковывает
+Сделан не «APFS на запись», а копия дерева. `/dipper/bin/var_store` (`userland/src/var_store.c`) упаковывает
 `/private/var` в простой архив и пишет его в единственное место флеша, которое принадлежит порту и которое ничто
 в нём не читает, — в раздел `darwin`, за томом iOS и двумя криптексами; `init` при следующей загрузке
 распаковывает архив поверх шаблона (`var_store=1`). Имя, которое есть и в шаблоне, и в архиве, выходит таким,
@@ -1732,7 +1732,7 @@ REST=1 userland/build.sh
 сжатие zlib, как у Apple):
 
 - `userland/root.apfs` — маленький (наш init, библиотеки-вставки, задания launchd, прошивки); едет вместе с
-  ядром (`/dev/md1`, на `/redwood`), пересобирается за секунды;
+  ядром (`/dev/md1`, на `/dipper`), пересобирается за секунды;
 - `userland/system.apfs` — корень: отобранная часть iOS 16.5 (`sysimage/select-system.py`), криптексы OS (с кэшем
   dyld) и App на `/System/Cryptexes`. Пересобирается только при изменении входных данных или с `SYSTEM=1`;
 - `userland/flashboot.apfs` (`FLASHBOOT=1`) — то, что нужно в памяти, когда корень — том iOS на флеше: загрузочный
@@ -1758,7 +1758,7 @@ REST=1 userland/build.sh
 Остальные переменные (`JOBS`, `OSLOG`, `INJECT`, `RC_JOBS`) описаны в начале `userland/build.sh`.Остальные переменные (`JOBS`, `OSLOG`, `INJECT`, `RC_JOBS`, `EXTRA`, `EXTRA_SHARE`) описаны в начале
 `userland/build.sh`.
 
-Список заданий (`RC_JOBS=файл`, он же `/redwood/etc/rc.jobs`) выполняет не оболочка, а наш `init`
+Список заданий (`RC_JOBS=файл`, он же `/dipper/etc/rc.jobs`) выполняет не оболочка, а наш `init`
 (`run_command` в `userland/src/init.c`), и рассчитывать в нём нельзя на четыре вещи:
 
 - **на оболочку.** В корне самой iOS 16.5 её нет вообще: `/bin` — это `df` и `ps`, и больше ничего. Строка,
@@ -2317,13 +2317,13 @@ Mesa в репозитории нет: `tools/mk-mesa.sh` один раз ска
 
 ### UEFI для телефона
 
-См. `devices/poco-x5-pro/uefi/README.md` (порт Project Silicium на redwood). Для запуска пересобирать не нужно: `mkxnuimg.py` берёт
-готовое из `devices/poco-x5-pro/prebuilt`.
+См. `devices/dipper/uefi/README.md` (порт Project Silicium на dipper). Для запуска пересобирать не нужно: `mkxnuimg.py` берёт
+готовое из `devices/dipper/prebuilt`.
 
 ## Как это устроено
 
 ```
-fastboot boot ──► UEFI (Mu-Silicium, redwood) ──► xnuloader (EFI-приложение)
+fastboot boot ──► UEFI (Mu-Silicium, dipper) ──► xnuloader (EFI-приложение)
                                                     │  остаётся резидентным: USB-канал (протокол fastboot),
                                                     │  сторожевой таймер, приём журнала от ядра
                                                     ▼
@@ -2337,7 +2337,7 @@ fastboot boot ──► UEFI (Mu-Silicium, redwood) ──► xnuloader (EFI-п�
                                                     ▼
               launchd iOS 16.5 → logd, notifyd, cfprefsd, runningboardd, backboardd, SpringBoard, приложения
                            ├─ в backboardd, SpringBoard и mediaserverd внедряются наши библиотеки
-                           │  (libredwood*.dylib): виртуальные HID-службы (сенсор, кнопки) и подмена
+                           │  (libdipper*.dylib): виртуальные HID-службы (сенсор, кнопки) и подмена
                            │  нескольких ObjC-методов
                            └─ mediaserverd получает наше устройство вывода (HakiosAudio.driver — подключаемый
                               модуль CoreAudio), которое пишет смикшированный звук в /dev/hakios-audio
@@ -2362,7 +2362,7 @@ fastboot boot ──► UEFI (Mu-Silicium, redwood) ──► xnuloader (EFI-п�
 | `userland/` | наш init, вставки (`src/inject.c` — backboardd, `src/inject_sb.c` — SpringBoard, `src/inject_media.c` — mediaserverd), звуковое устройство (`src/audio_plugin.c`), тесты, сборка образов |
 | `sysimage/` | добыча файлов iOS из IPSW и выбор того, что идёт в образ |
 | `qemu/` | запуск в QEMU, касания, снимки экрана, разбор стеков |
-| `uefi/`, `mkxnuimg.py` | порт UEFI на redwood и упаковка загрузочного образа для `fastboot boot` |
+| `uefi/`, `mkxnuimg.py` | порт UEFI на dipper и упаковка загрузочного образа для `fastboot boot` |
 | `tools/` | `recording.py` (запись экрана → mp4), `sound.py` (запись звука → wav), `update-prebuilt.sh`, `new-workspace.sh` (вторая рабочая копия со своим ядром и QEMU), `mk-mesa.sh` (Mesa для `GL=1`), `mk-ath11k.sh` (драйвер Wi-Fi для ядра), `mk-jb.sh` (бутстрап Procursus и Sileo, см. «Sileo и пакеты»), `apfs/` (APFS на компьютере: чтение — «Чтение APFS», запись — «Запись в APFS», сборка образов `mkapfs.py` и их проверка `check-image.sh` — «Только APFS, как на iPhone»), `darwin-write.py` (запись в раздел `darwin` и только в него — «Криптексы на флеше»), `qmi-test/` и `wpa-test/` (проверки на компьютере) |
 | `wifi/lx/` | прослойка, на которой драйвер Wi-Fi из Linux собирается для нашего ядра (см. «Драйвер Wi-Fi») |
 | `jb/` | префикс менеджера пакетов: бутстрап Procursus с Sileo (`tools/mk-jb.sh`), в git не попадает |
@@ -3102,14 +3102,14 @@ APFS никогда не перезаписывает уже опубликов�
 которым он сравнивает, считается из файла, каким тот был **до** записи, а не из результата.
 
 ```sh
-python3 tools/apfs/mkapfs.py -o apfs-work/wroot.apfs redwood=КАТАЛОГ    # с обычным, несжимаемым файлом scratch
+python3 tools/apfs/mkapfs.py -o apfs-work/wroot.apfs dipper=КАТАЛОГ    # с обычным, несжимаемым файлом scratch
 IMG=apfs-work/wroot.apfs ROOT=apfs-work/wroot.apfs QEMU_RAM_GB=4 CMDLINE="apfs_check=7 apfs_dev=md1 apfs_write_path=/scratch apfs_write_len=8192 apfs_write_byte=165" qemu/run-ios.sh 60 > logs/apfswrite.log
 ```
 
 В журнале:
 
 ```
-apfs-write: /scratch on redwood, inode 18, 65536 bytes, hash 511049d0f82a1598
+apfs-write: /scratch on dipper, inode 18, 65536 bytes, hash 511049d0f82a1598
 apfs-write: 8192 bytes of 0xa5 at 0: written; 2 blocks from 92, 0 of them patched whole, 2 writes
 apfs-write: read back from a container opened again: 65536 bytes, hash 1b14170583dc71a3 (was 511049d0f82a1598);
             the bytes written are all there and nothing else changed
@@ -3255,5 +3255,5 @@ iOS, которого она ждёт, — это уже другое: созд�
   уведомления об авторских правах (они в заголовках файлов ath11k и в `COPYRIGHT` из архива FreeBSD);
 - `xnu-deps/build/lzbitmap/libzbitmap.*` — libzbitmap (Corellium, GPL-2.0+ OR MIT);
   `xnu-deps/hostinc/mach-o/{loader,nlist,fat}.h` — заголовки из XNU (APSL 2.0).
-- `devices/poco-x5-pro/uefi/files/Binaries/redwood` и `devices/poco-x5-pro/prebuilt/SILICIUM_UEFI.fd` содержат драйверы UEFI из прошивки Xiaomi
-  (так же, как их распространяет Project Silicium для других устройств); `devices/poco-x5-pro/prebuilt/mkbootimg.py` — AOSP, Apache-2.0.
+- `devices/dipper/uefi/files/Binaries/dipper` и `devices/dipper/prebuilt/SILICIUM_UEFI.fd` содержат драйверы UEFI из прошивки Xiaomi
+  (так же, как их распространяет Project Silicium для других устройств); `devices/dipper/prebuilt/mkbootimg.py` — AOSP, Apache-2.0.

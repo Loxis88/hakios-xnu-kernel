@@ -42,7 +42,7 @@ are obtained from their own upstreams under their own licenses.
 
 These are flagged for review and are **not** asserted to be settled:
 
-- **UEFI driver binaries** under `devices/poco-x5-pro/uefi/files/Binaries/` are the phone
+- **UEFI driver binaries** under `devices/dipper/uefi/files/Binaries/` are the phone
   vendor's (Qualcomm/Xiaomi), extracted from the device's own `xbl.img`. They are needed only to
   rebuild the UEFI image and can be removed and re-extracted by each user from their own phone
   with UEFIReader. Whether redistributing them is permitted has not been confirmed with the
@@ -52,7 +52,7 @@ These are flagged for review and are **not** asserted to be settled:
   is generated from a firmware blob on the device. Its redistribution terms are the touch
   vendor's and have not been confirmed; it is a candidate for moving to the pull-from-device
   model the rest of the firmware already uses.
-- **Mu-Silicium / Project Mu** derived files under `devices/poco-x5-pro/uefi/` carry upstream
+- **Mu-Silicium / Project Mu** derived files under `devices/dipper/uefi/` carry upstream
   BSD-2-Clause-Patent and GPL-2.0-or-MIT headers; the derived parts keep those licenses.
 
 If any of these cannot be confirmed as redistributable, the fallback is the same as for all
